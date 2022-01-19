@@ -3,6 +3,7 @@ from core.rendering.sprite import Sprite
 from world.world import World
 from core.player import Player
 from core.eventmanager import EventManager
+from core.interactionmanager import InteractionManager
 from core.actions import Action, EscapeAction, MovementAction, InteractionAction
 from ui.narrator import Narrator
 
@@ -11,16 +12,22 @@ import tcod
 class Game:
     def __init__(self) -> None:
         self.narrator = Narrator()
-        self.renderer = Renderer(self.narrator)
         self.world = World()
-        self.running = True
         self.player = Player(4,18,self.world)
+        self.interactionmanager = InteractionManager(self.world,self.player)
+        self.mode = "inperson"
+        self.renderer = Renderer(self.narrator,self.interactionmanager)
+        self.running = True
         self.eventManager = EventManager()
-        self.testSpr = Sprite(25,25,500,500,self.renderer.getTexture('test'))
+        self.testSpr = Sprite(25,25,200,200,self.renderer.getTexture('test'))
 
     def start(self) -> None:
         while self.running:
             self.update()
+
+    def setMode(self,mode) -> None:
+        self.mode = mode
+        self.renderer.mode =mode
 
     def update(self) -> None:
 
@@ -30,20 +37,28 @@ class Game:
             if action is None:
                 continue
             
-            if isinstance(action,MovementAction) and not self.narrator.displaying:
-                self.player.move(action.dx,action.dy)
+            if isinstance(action,MovementAction):
+                if self.interactionmanager.interacting:
+                    self.interactionmanager.interactionIdx+=action.dy
+                else:
+                    self.player.move(action.dx,action.dy)
                 
 
             elif isinstance(action,EscapeAction):
-                raise SystemExit()
+                if self.interactionmanager.interacting:
+                    self.interactionmanager.interacting = False
+                    self.interactionmanager.currentInteraction = "interactionChoice"
+                else:
+                    raise SystemExit()
 
             elif isinstance(action,InteractionAction):
-                #test
-                if self.narrator.displaying:
-                    self.narrator.clear()
+                if not self.interactionmanager.interacting:
+                    self.interactionmanager.interacting = True
                 else:
-                    self.narrator.narrate("You see suddenly a bright line from the alleyway, it casting shadows from nearby trash cans and lamposts. It blinds you for a few seconds, and once you can see again, it is gone.")
+                    self.interactionmanager.click()
+                
 
+        self.interactionmanager.update()
         if self.narrator.displaying:
             self.narrator.update()
         
@@ -58,7 +73,6 @@ class Game:
 
         self.renderer.drawSprite(self.testSpr)
         self.renderer.drawChar(self.player.x,self.player.y,'@',fg=self.player.fg)
-        self.testSpr.setPosition(self.testSpr.getPosition()[0]+1,self.testSpr.getPosition()[1])
 
         self.renderer.drawUI()
         

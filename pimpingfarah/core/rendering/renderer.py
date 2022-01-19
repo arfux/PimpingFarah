@@ -1,6 +1,7 @@
 import tcod
 import math
 from ui.narrator import Narrator
+from core.interactionmanager import InteractionManager
 from core.rendering.texturemanager import TextureManager
 from core.rendering.sprite import Sprite
 import pygame
@@ -14,7 +15,7 @@ SIDE_UI_WIDTH = 20
 TOP_UI_BAR_HEIGHT = 1
 
 class Renderer:
-    def __init__(self, narrator: Narrator) -> None:
+    def __init__(self, narrator: Narrator, interactionManager: InteractionManager) -> None:
         self.context = tcod.context.new(columns=WIDTH,rows=HEIGHT,renderer=tcod.context.RENDERER_SDL2)
         self.console = self.context.new_console(order="F")
         self.cameraX = 0
@@ -24,6 +25,7 @@ class Renderer:
         self.texMgr = TextureManager(self.sdlRenderer)
         self.texMgr.loadTexture('pimpingfarah/assets/test2.jpg','test')
         self.spritesToDraw = []
+        self.interactionManager = interactionManager
 
     def getTexture(self,tex):
         return self.texMgr.texDictionary[tex]
@@ -54,6 +56,28 @@ class Renderer:
     def drawSprite(self,spr) -> None:
         self.spritesToDraw.append(spr)
         
+    def printInteractionBox(self,interaction='normal') -> None:
+        interBox = (math.floor(WIDTH/2) -10,math.floor(HEIGHT/2)-10,20,20)
+
+        if self.interactionManager.interacting:
+            match self.interactionManager.currentInteraction:
+                case "talkTo":
+                        self.console.print_frame(interBox[0],interBox[1],interBox[2],interBox[3],"Talk to")
+                        actions = self.interactionManager.interactions[self.interactionManager.currentInteraction]["options"]
+                        for idx,action in enumerate(actions):
+                            print(action)
+                            bg = (0,0,0) if idx != self.interactionManager.interactionIdx else (255,255,255)
+                            fg = (0,0,0) if idx == self.interactionManager.interactionIdx else (255,255,255)
+                            self.console.print(interBox[0]+1,interBox[1]+1+idx, ("E" if not idx else str(idx)), fg=(125,0,125), bg=bg)
+                            self.console.print(interBox[0]+2,interBox[1]+1+idx, action,fg=fg,bg=bg)
+                case _:
+                    self.console.print_frame(interBox[0],interBox[1],interBox[2],interBox[3],"Interact")
+                    actions = self.interactionManager.interactions["interactionChoice"]["options"]
+                    for idx,action in enumerate(actions):
+                        bg = (0,0,0) if idx != self.interactionManager.interactionIdx else (255,255,255)
+                        fg = (0,0,0) if idx == self.interactionManager.interactionIdx else (255,255,255)
+                        self.console.print(interBox[0]+1,interBox[1]+1+idx, ("E" if not idx else str(idx)), fg=(125,0,125), bg=bg)
+                        self.console.print(interBox[0]+2,interBox[1]+1+idx, action["label"],fg=fg,bg=bg)
 
     def drawUI(self) -> None:
         #Game title
@@ -64,6 +88,10 @@ class Renderer:
             self.console.print_frame(0,HEIGHT-BOTTOM_UI_HEIGHT,WIDTH-SIDE_UI_WIDTH,BOTTOM_UI_HEIGHT)
             self.console.print_box(1,HEIGHT-BOTTOM_UI_HEIGHT+1,WIDTH-SIDE_UI_WIDTH-2,BOTTOM_UI_HEIGHT-2, self.narrator.textToDraw)
         
+        if self.interactionManager.interacting:
+            self.printInteractionBox()
+        
+
 
     def render(self) -> None:
         
