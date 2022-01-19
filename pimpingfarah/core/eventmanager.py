@@ -1,7 +1,7 @@
 from typing import Optional
 import tcod
 import tcod.event
-from core.actions import Action, EscapeAction, MovementAction
+from core.actions import Action, EscapeAction, MovementAction, InteractionAction
 
 class EventManager(tcod.event.EventDispatch[Action]):
     def ev_quit(self,event: tcod.event.Quit) -> Optional[Action]:
@@ -20,6 +20,9 @@ class EventManager(tcod.event.EventDispatch[Action]):
             action = MovementAction(dx=-1, dy=0)
         elif key == tcod.event.K_RIGHT:
             action = MovementAction(dx=1, dy=0)
+
+        elif key == tcod.event.K_e:
+            action = InteractionAction()
 
         elif key == tcod.event.K_ESCAPE:
             action = EscapeAction()

@@ -1,5 +1,6 @@
 from world.tile import Tile
 from world.object import Object
+from world.characters.char_farah import CharFarah
 import random
 import math
 
@@ -33,14 +34,16 @@ class World:
                 self.objects.append(Object(x,y,True,'A wall','#'))
         
     def createPlaceholder(self) -> None:
-        for i in range(0,100):
-            for j in range(0,100):
+        for i in range(-25,100):
+            for j in range(-25,100):
                 self.tiles.append(Tile(i,j,'.' if random.randint(0,1) else ',', 'Floor'))
 
         
         self.createWall(5,5,15,5)
         self.createWall(15,5,15,15)
         self.createWall(5,15,15,15)
+
+        self.characters.append(CharFarah(x=12,y=12))
     
     def update(self) -> None:
         for obj in self.objects:
