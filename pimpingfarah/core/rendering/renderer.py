@@ -8,7 +8,6 @@ from sdl2 import *
 import imageio as iio
 
 
-
 WIDTH,HEIGHT = 80,48
 BOTTOM_UI_HEIGHT = 10
 SIDE_UI_WIDTH = 20
@@ -21,13 +20,9 @@ class Renderer:
         self.cameraX = 0
         self.cameraY = 0
         self.narrator = narrator
-
         self.sdlRenderer = tcod.lib.SDL_GetRenderer(self.context.sdl_window_p)
-        
         self.texMgr = TextureManager(self.sdlRenderer)
         self.texMgr.loadTexture('pimpingfarah/assets/test2.jpg','test')
-
-
         self.spritesToDraw = []
 
     def getTexture(self,tex):
@@ -62,7 +57,6 @@ class Renderer:
 
     def drawUI(self) -> None:
         #Game title
-
         self.console.vline(WIDTH-SIDE_UI_WIDTH,0,HEIGHT)
         self.console.print(math.floor(WIDTH-SIDE_UI_WIDTH + (SIDE_UI_WIDTH/2)), 0,"xxx v0.1",bg=(25,0,25), alignment=tcod.CENTER)
 
