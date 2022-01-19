@@ -25,7 +25,7 @@ class Renderer:
         self.sdlRenderer = tcod.lib.SDL_GetRenderer(self.context.sdl_window_p)
         
         self.texMgr = TextureManager(self.sdlRenderer)
-        self.texMgr.loadTexture('assets/test2.jpg','test')
+        self.texMgr.loadTexture('pimpingfarah/assets/test2.jpg','test')
 
 
         self.spritesToDraw = []
