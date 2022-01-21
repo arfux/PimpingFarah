@@ -2,6 +2,7 @@ import tcod
 import math
 from ui.narrator import Narrator
 from core.interactionmanager import InteractionManager
+from core.talkingmanager import TalkingManager
 from core.rendering.texturemanager import TextureManager
 from core.rendering.sprite import Sprite
 import pygame
@@ -15,7 +16,7 @@ SIDE_UI_WIDTH = 20
 TOP_UI_BAR_HEIGHT = 1
 
 class Renderer:
-    def __init__(self, narrator: Narrator, interactionManager: InteractionManager) -> None:
+    def __init__(self, narrator: Narrator, interactionManager: InteractionManager, talkingmanager: TalkingManager) -> None:
         self.context = tcod.context.new(columns=WIDTH,rows=HEIGHT,renderer=tcod.context.RENDERER_SDL2)
         self.console = self.context.new_console(order="F")
         self.cameraX = 0
@@ -23,9 +24,10 @@ class Renderer:
         self.narrator = narrator
         self.sdlRenderer = tcod.lib.SDL_GetRenderer(self.context.sdl_window_p)
         self.texMgr = TextureManager(self.sdlRenderer)
-        self.texMgr.loadTexture('pimpingfarah/assets/test2.jpg','test')
+        self.texMgr.loadTexture('pimpingfarah/assets/test.png','test')
         self.spritesToDraw = []
         self.interactionManager = interactionManager
+        self.talkingmanager = talkingmanager
 
     def getTexture(self,tex):
         return self.texMgr.texDictionary[tex]
@@ -61,28 +63,36 @@ class Renderer:
 
         if self.interactionManager.interacting:
             match self.interactionManager.currentInteraction:
-                case "talkTo":
-                        self.console.print_frame(interBox[0],interBox[1],interBox[2],interBox[3],"Talk to")
-                        actions = self.interactionManager.interactions[self.interactionManager.currentInteraction]["options"]
-                        for idx,action in enumerate(actions):
-                            print(action)
-                            bg = (0,0,0) if idx != self.interactionManager.interactionIdx else (255,255,255)
-                            fg = (0,0,0) if idx == self.interactionManager.interactionIdx else (255,255,255)
-                            self.console.print(interBox[0]+1,interBox[1]+1+idx, ("E" if not idx else str(idx)), fg=(125,0,125), bg=bg)
-                            self.console.print(interBox[0]+2,interBox[1]+1+idx, action,fg=fg,bg=bg)
+                
                 case _:
-                    self.console.print_frame(interBox[0],interBox[1],interBox[2],interBox[3],"Interact")
-                    actions = self.interactionManager.interactions["interactionChoice"]["options"]
+                    self.console.print_frame(interBox[0],interBox[1],interBox[2],interBox[3],self.interactionManager.getCurrentInteraction()["name"])
+                    actions = self.interactionManager.interactions[self.interactionManager.currentInteraction]["options"]
                     for idx,action in enumerate(actions):
+                        label = action["label"] if "label" in action else action
                         bg = (0,0,0) if idx != self.interactionManager.interactionIdx else (255,255,255)
                         fg = (0,0,0) if idx == self.interactionManager.interactionIdx else (255,255,255)
                         self.console.print(interBox[0]+1,interBox[1]+1+idx, ("E" if not idx else str(idx)), fg=(125,0,125), bg=bg)
-                        self.console.print(interBox[0]+2,interBox[1]+1+idx, action["label"],fg=fg,bg=bg)
+                        self.console.print(interBox[0]+2,interBox[1]+1+idx, label,fg=fg,bg=bg)
+
+    def printTalkingBox(self) -> None:
+        talkBox = (math.floor(WIDTH/2) -25,math.floor(HEIGHT/2)-10,50,20)
+
+        if self.talkingmanager.talking:
+                
+            self.console.print_frame(talkBox[0],talkBox[1],talkBox[2],talkBox[3],"Talking")
+            self.console.print_box(talkBox[0]+1,talkBox[1]+1,talkBox[2],talkBox[3], self.talkingmanager.getCurrentPhrase())
+            self.console.hline(talkBox[0]+1,talkBox[1]+10,48,20)
+            for idx,option in enumerate(self.talkingmanager.currentNode["options"]):
+                bg = (0,0,0) if idx != self.talkingmanager.selectedOption else (255,255,255)
+                fg = (0,0,0) if idx == self.talkingmanager.selectedOption else (255,255,255)
+                self.console.print(talkBox[0]+1,talkBox[1]+11+idx, option["label"],fg=fg,bg=bg)
+
+
 
     def drawUI(self) -> None:
         #Game title
         self.console.vline(WIDTH-SIDE_UI_WIDTH,0,HEIGHT)
-        self.console.print(math.floor(WIDTH-SIDE_UI_WIDTH + (SIDE_UI_WIDTH/2)), 0,"xxx v0.1",bg=(25,0,25), alignment=tcod.CENTER)
+        self.console.print(math.floor(WIDTH-SIDE_UI_WIDTH + (SIDE_UI_WIDTH/2)), 0,"Pimping Farah v0.1",bg=(25,0,25), alignment=tcod.CENTER)
 
         if self.narrator.displaying:
             self.console.print_frame(0,HEIGHT-BOTTOM_UI_HEIGHT,WIDTH-SIDE_UI_WIDTH,BOTTOM_UI_HEIGHT)
@@ -90,6 +100,9 @@ class Renderer:
         
         if self.interactionManager.interacting:
             self.printInteractionBox()
+        
+        if self.talkingmanager.talking:
+            self.printTalkingBox()
         
 
 
